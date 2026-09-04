@@ -40,4 +40,3 @@ class Category:
     def add_product(self, product: Product):
         """Метод для добавления товара в категорию."""
         self.products.append(product)
-
