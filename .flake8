@@ -1,0 +1,21 @@
+[flake8]
+# Исключаемые директории и файлы
+exclude =
+    .git,
+    __pycache__,
+    docs/source/conf.py,
+    old,
+    build,
+    dist,
+    venv
+
+# Игнорируемые ошибки (например, E203 для совместимости с Black)
+ignore =
+    E203,
+    W503
+
+# Максимальная длина строки
+max-line-length = 88
+
+# Максимальная сложность кода по МакКейбу
+max-complexity = 10
