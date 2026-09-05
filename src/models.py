@@ -1,9 +1,6 @@
 class Product:
     """Класс для представления товара."""
 
-    # Атрибуты класса (счетчик общего количества уникальных продуктов)
-    product_count = 0
-
     name: str
     description: str
     price: float
@@ -15,15 +12,13 @@ class Product:
         self.price = price
         self.quantity = quantity
 
-        # Увеличиваем счетчик при создании каждого нового продукта
-        Product.product_count += 1
-
 
 class Category:
     """Класс для представления категории товаров."""
 
-    # Атрибуты класса (счетчик общего количества категорий)
+    # Атрибуты класса для подсчета количества категорий и уникальных товаров
     category_count = 0
+    product_count = 0
 
     name: str
     description: str
@@ -32,11 +27,15 @@ class Category:
     def __init__(self, name: str, description: str):
         self.name = name
         self.description = description
-        self.products = []  # Список товаров изначально пустой
+        self.products = []
 
-        # Увеличиваем счетчик при создании каждой новой категории
+        # Увеличиваем счетчик категорий при создании нового объекта
         Category.category_count += 1
 
     def add_product(self, product: Product):
         """Метод для добавления товара в категорию."""
         self.products.append(product)
+
+        # Увеличиваем счетчик уникальных товаров при каждом добавлении в категорию
+        Category.product_count += 1
+
