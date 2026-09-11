@@ -1,44 +1,64 @@
 class Product:
     """Класс для представления товара."""
 
-    name: str
-    description: str
-    price: float
-    quantity: int
-
     def __init__(self, name: str, description: str, price: float, quantity: int):
         self.name = name
         self.description = description
-        self.price = price
+        self.__price = price  # Приватный атрибут цены
         self.quantity = quantity
+
+    @classmethod
+    def new_product(cls, product_data: dict):
+        """Класс-метод для создания объекта Product из словаря."""
+        return cls(
+            name=product_data["name"],
+            description=product_data["description"],
+            price=product_data["price"],
+            quantity=product_data["quantity"]
+        )
+
+    @property
+    def price(self) -> float:
+        """Геттер для получения цены товара."""
+        return self.__price
+
+    @price.setter
+    def price(self, new_price: float) -> None:
+        """Сеттер для установки цены товара с проверкой корректности."""
+        if new_price <= 0:
+            print("Цена не должна быть нулевая или отрицательная")
+        else:
+            self.__price = new_price
 
 
 class Category:
     """Класс для представления категории товаров."""
 
-    # Атрибуты класса для подсчета количества категорий и товаров
     category_count = 0
     product_count = 0
-
-    name: str
-    description: str
-    products: list
 
     def __init__(self, name: str, description: str, products: list = None) -> None:
         self.name = name
         self.description = description
+        self.__products = []
 
-        # Если список товаров не передан, инициализируем его как пустой список
-        self.products = products if products is not None else []
+        if products is not None:
+            for product in products:
+                self.add_product(product)
 
-        # Увеличиваем счетчики при создании новой категории
         Category.category_count += 1
-        Category.product_count += len(self.products)
 
-    def add_product(self, product: Product):
-        """Метод для добавления товара в категорию."""
-        self.products.append(product)
-
-        # Увеличиваем счетчик товаров при динамическом добавлении
+    def add_product(self, product: Product) -> None:
+        """Метод для добавления объекта Product в приватный список товаров."""
+        self.__products.append(product)
         Category.product_count += 1
+
+    @property
+    def products(self) -> str:
+        """Геттер для вывода списка товаров в категории."""
+        result = []
+        for product in self.__products:
+            # Обращаемся к цене через геттер product.price
+            result.append(f"{product.name}, {product.price} руб. Остаток: {product.quantity} шт.")
+        return "\n".join(result)
 
