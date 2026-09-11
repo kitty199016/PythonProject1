@@ -61,4 +61,3 @@ class Category:
             # Обращаемся к цене через геттер product.price
             result.append(f"{product.name}, {product.price} руб. Остаток: {product.quantity} шт.")
         return "\n".join(result)
-
