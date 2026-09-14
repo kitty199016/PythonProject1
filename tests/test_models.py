@@ -56,6 +56,7 @@ def test_product_count():
     assert "Samsung Galaxy S23" in category.products
     assert "Iphone 15" in category.products
 
+
 @pytest.fixture
 def product_a():
     """Фикстура для товара A."""

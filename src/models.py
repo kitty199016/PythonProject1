@@ -74,4 +74,3 @@ class Category:
         """Оптимизированный геттер для вывода списка товаров с использованием str(product)."""
         # Преобразуем каждый объект продукта в строку благодаря реализованному Product.__str__
         return "\n".join(str(product) for product in self.__products)
-
