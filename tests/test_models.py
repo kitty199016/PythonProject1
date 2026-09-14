@@ -55,3 +55,56 @@ def test_product_count():
     # Дополнительно проверяем, что продукты отображаются в строке корректно
     assert "Samsung Galaxy S23" in category.products
     assert "Iphone 15" in category.products
+
+@pytest.fixture
+def product_a():
+    """Фикстура для товара A."""
+    return Product("Товар A", "Описание A", 100.0, 10)
+
+
+@pytest.fixture
+def product_b():
+    """Фикстура для товара B."""
+    return Product("Товар B", "Описание B", 200.0, 2)
+
+
+@pytest.fixture
+def sample_category(product_a, product_b):
+    """Фикстура для категории с двумя товарами."""
+    return Category("Электроника", "Гаджеты и девайсы", [product_a, product_b])
+
+
+# --- Тесты для класса Product ---
+
+def test_product_str(product_a):
+    """Тест строкового отображения продукта."""
+    assert str(product_a) == "Товар A", 100.0 руб. Остаток: 10 шт."
+
+
+def test_product_add(product_a, product_b):
+    """Тест сложения двух продуктов (полная стоимость на складе)."""
+    # 100 * 10 + 200 * 2 = 1000 + 400 = 1400
+    assert product_a + product_b == 1400.0
+
+
+def test_product_add_type_error(product_a):
+    """Тест, что сложение товара с объектом другого типа вызывает ошибку."""
+    with pytest.raises(TypeError):
+        _ = product_a + 500  # Попытка сложить товар с числом
+
+
+# --- Тесты для класса Category ---
+
+def test_category_str(sample_category):
+    """Тест строкового отображения категории (подсчет общего количества штук)."""
+    # 10 шт товара A + 2 шт товара B = 12 шт
+    assert str(sample_category) == "Электроника, количество продуктов: 12 шт."
+
+
+def test_category_products_getter(sample_category):
+    """Тест работы геттера продуктов через str()."""
+    expected_output = (
+        "Товар A, 100.0 руб. Остаток: 10 шт.\n"
+        "Товар B, 200.0 руб. Остаток: 2 шт."
+    )
+    assert sample_category.products == expected_output
