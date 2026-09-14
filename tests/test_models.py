@@ -78,7 +78,7 @@ def sample_category(product_a, product_b):
 
 def test_product_str(product_a):
     """Тест строкового отображения продукта."""
-    assert str(product_a) == "Товар A", 100.0 руб. Остаток: 10 шт."
+    assert str(product_a) == "Товар A, 100.0 руб. Остаток: 10 шт."
 
 
 def test_product_add(product_a, product_b):

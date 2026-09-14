@@ -7,6 +7,13 @@ class Product:
         self.__price = price  # Приватный атрибут цены
         self.quantity = quantity
 
+    def __add__(self, other):
+        """Реализация сложения двух товаров (цена * количество + цена * количество)."""
+        # Проверяем, что складываем именно с другим объектом Product
+        if isinstance(other, Product):
+            return (self.price * self.quantity) + (other.price * other.quantity)
+        raise TypeError("Складывать можно только объекты класса Product")
+
     def __str__(self):
         # Реализовано строковое отображение в заданном формате
         return f'{self.name}, {self.price} руб. Остаток: {self.quantity} шт.'
@@ -51,13 +58,6 @@ class Category:
                 self.add_product(product)
 
         Category.category_count += 1
-
-    def __add__(self, other):
-        """Реализация сложения двух товаров (цена * количество + цена * количество)."""
-        # Проверяем, что складываем именно с другим объектом Product
-        if isinstance(other, Product):
-            return (self.price * self.quantity) + (other.price * other.quantity)
-        raise TypeError("Складывать можно только объекты класса Product")
 
     def __str__(self):
         # Количество продуктов считается как сумма всех единиц товара на складе (quantity)
