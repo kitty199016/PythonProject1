@@ -16,7 +16,6 @@ class Product:
             return (self.price * self.quantity) + (other.price * other.quantity)
         raise TypeError("Складывать можно только товары одного и того же класса")
 
-
     def __str__(self):
         # Реализовано строковое отображение в заданном формате
         return f'{self.name}, {self.price} руб. Остаток: {self.quantity} шт.'
@@ -86,14 +85,10 @@ class Category:
         self.__products.append(product)
         Category.product_count += 1
 
+    # Этот блок нужно оставить, а дубликат выше — удалить
     @property
     def products(self) -> str:
-        return "\n".join(str(product) for product in self.__products)
-
-    @property
-    def products(self) -> str:
-        """Оптимизированный геттер для вывода списка товаров с использованием str(product)."""
-        # Преобразуем каждый объект продукта в строку благодаря реализованному Product.__str__
+        """Возвращает строковое представление списка товаров."""
         return "\n".join(str(product) for product in self.__products)
 
 
