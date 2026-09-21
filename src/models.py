@@ -63,14 +63,32 @@ class Category:
         Category.category_count += 1
 
     def __str__(self):
-        # Количество продуктов считается как сумма всех единиц товара на складе (quantity)
         total_quantity = sum(product.quantity for product in self.__products)
-        return f'{self.name}, количество продуктов: {total_quantity} шт.'
+        return f'{self.name}, количество товаров: {total_quantity} шт.'
 
     def add_product(self, product: Product) -> None:
-        """Метод для добавления товара Product в приватный список товаров."""
+        """
+        Добавляет продукт в категорию.
+        Защищает список от добавления объектов, не являющихся Product или его наследниками.
+        """
+        # Проверяем, является ли объект экземпляром класса Product или его подклассов
+        if not isinstance(product, Product):
+            raise TypeError("Добавлять в категорию можно только товары (класса Product или его наследников)")
+
+        # Логика проверки на уникальность по имени
+        for existing_product in self.__products:
+            if existing_product.name == product.name:
+                existing_product.quantity += product.quantity
+                existing_product.price = max(existing_product.price, product.price)
+                return
+
+        # Если продукт уникальный и валидный, добавляем его
         self.__products.append(product)
         Category.product_count += 1
+
+    @property
+    def products(self) -> str:
+        return "\n".join(str(product) for product in self.__products)
 
     @property
     def products(self) -> str:
