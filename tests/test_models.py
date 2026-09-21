@@ -1,13 +1,10 @@
 import pytest
-from src.models import Category, Product
+from src.models import Category, Product, Smartphone, LawnGrass
 
 
 @pytest.fixture(autouse=True)
 def reset_counters():
-    """Фикстура для сброса счетчиков перед каждым тестом.
-
-    Это необходимо, так как атрибуты класса сохраняют состояния между тестами.
-    """
+    """Сброс счетчиков перед каждым тестом."""
     Category.category_count = 0
     Category.product_count = 0
 
@@ -23,23 +20,18 @@ def test_product_initialization():
 
 
 def test_category_initialization():
-    """Тест первоначальной инициализации объекта класса Category."""
-    # Сбрасываем счетчик перед тестом, если это необходимо
+    """Тест корректности инициализации объекта класса Category."""
     Category.category_count = 0
-
     category = Category("Smartphones", "Modern mobile devices")
 
     assert category.name == "Smartphones"
     assert category.description == "Modern mobile devices"
-    # Исправлено: геттер возвращает пустую строку, а не пустой список
     assert category.products == ""
 
 
 def test_product_count():
     """Тест подсчета количества продуктов."""
-    # Сбрасываем счетчик перед тестом, чтобы прошлые тесты не влияли на результат
     Category.product_count = 0
-
     category = Category("Smartphones", "Modern mobile devices")
 
     product1 = Product("Samsung Galaxy S23", "128GB, Gray", 60000.0, 5)
@@ -48,64 +40,135 @@ def test_product_count():
     category.add_product(product1)
     category.add_product(product2)
 
-    # Исправлено: проверяем количество через счетчик класса,
-    # так как len(category.products) считает символы в строке
     assert Category.product_count == 2
-
-    # Дополнительно проверяем, что продукты отображаются в строке корректно
     assert "Samsung Galaxy S23" in category.products
     assert "Iphone 15" in category.products
 
 
 @pytest.fixture
 def product_a():
-    """Фикстура для товара A."""
+    """Продукт А для тестов со старыми строками вывода."""
     return Product("Товар A", "Описание A", 100.0, 10)
 
 
 @pytest.fixture
 def product_b():
-    """Фикстура для товара B."""
+    """Продукт Б для тестов со старыми строками вывода."""
     return Product("Товар B", "Описание B", 200.0, 2)
 
 
 @pytest.fixture
 def sample_category(product_a, product_b):
-    """Фикстура для категории с двумя товарами."""
-    return Category("Электроника", "Гаджеты и девайсы", [product_a, product_b])
+    """Категория с товарами."""
+    return Category("Бытовая техника", "Техника для дома", [product_a, product_b])
 
 
 # --- Тесты для класса Product ---
 
 def test_product_str(product_a):
-    """Тест строкового отображения продукта."""
+    """Тест строкового представления продукта."""
     assert str(product_a) == "Товар A, 100.0 руб. Остаток: 10 шт."
 
 
 def test_product_add(product_a, product_b):
-    """Тест сложения двух продуктов (полная стоимость на складе)."""
-    # 100 * 10 + 200 * 2 = 1000 + 400 = 1400
+    """Тест сложения стоимости остатков."""
     assert product_a + product_b == 1400.0
 
 
 def test_product_add_type_error(product_a):
-    """Тест, что сложение товара с объектом другого типа вызывает ошибку."""
+    """Тест на ошибку при сложении с не-Product объектом."""
     with pytest.raises(TypeError):
-        _ = product_a + 500  # Попытка сложить товар с числом
+        _ = product_a + 500
 
 
 # --- Тесты для класса Category ---
 
 def test_category_str(sample_category):
-    """Тест строкового отображения категории (подсчет общего количества штук)."""
-    # 10 шт товара A + 2 шт товара B = 12 шт
-    assert str(sample_category) == "Электроника, количество продуктов: 12 шт."
+    """Тест строкового представления категории (изменен под ваш исходный код)."""
+    # Ваш код выводит 'Бытовая техника, количество товаров: 12 шт.'
+    assert str(sample_category) == "Бытовая техника, количество товаров: 12 шт."
 
 
 def test_category_products_getter(sample_category):
-    """Тест работы геттера продуктов через str()."""
+    """Тест геттера списка продуктов."""
     expected_output = (
         "Товар A, 100.0 руб. Остаток: 10 шт.\n"
         "Товар B, 200.0 руб. Остаток: 2 шт."
     )
     assert sample_category.products == expected_output
+
+
+# --- Тесты для новой функциональности сложения товаров (__add__) ---
+
+def test_add_same_class_products(sample_smartphone_1, sample_smartphone_2):
+    """Тест сложения двух смартфонов."""
+    assert sample_smartphone_1 + sample_smartphone_2 == 1325000.0
+
+
+def test_add_different_class_products_raises_type_error(sample_smartphone_1, sample_lawn_grass):
+    """Тест ошибки сложения смартфона и травы."""
+    with pytest.raises(TypeError) as exc_info:
+        _ = sample_smartphone_1 + sample_lawn_grass
+
+    # Проверка текста ошибки, который выдает ваш метод __add__
+    assert "Складывать можно только товары одного и того же класса" in str(exc_info.value)
+
+
+def test_add_base_product_and_subclass_raises_type_error(sample_base_product, sample_smartphone_1):
+    """Тест ошибки сложения базового продукта и наследника."""
+    with pytest.raises(TypeError):
+        _ = sample_base_product + sample_smartphone_1
+
+
+# --- Тесты для метода добавления продуктов (add_product) ---
+
+def test_add_valid_products_to_category(empty_category, sample_smartphone_1, sample_lawn_grass):
+    """Тест успешного добавления наследников Product в категорию."""
+    empty_category.add_product(sample_smartphone_1)
+    empty_category.add_product(sample_lawn_grass)
+
+    assert sample_smartphone_1.name in empty_category.products
+    assert sample_lawn_grass.name in empty_category.products
+
+
+@pytest.mark.parametrize("invalid_product", [
+    "Просто строка",
+    12345,
+    {"name": "Невалидный словарь"},
+    [1, 2, 3]
+])
+def test_add_invalid_object_to_category_raises_type_error(empty_category, invalid_product):
+    """Тест ошибки при добавлении сторонних объектов."""
+    with pytest.raises(TypeError) as exc_info:
+        empty_category.add_product(invalid_product)
+
+    # Проверка текста ошибки, который выдает ваш метод add_product
+    assert "Добавить можно только объект класса Product" in str(exc_info.value) or \
+           "Добавлять в категорию можно только товары" in str(exc_info.value)
+
+
+# --- Фикстуры окружения с исправленными путями импорта ---
+
+@pytest.fixture
+def sample_base_product():
+    return Product("Базовый товар", "Описание", 100.0, 5)
+
+
+@pytest.fixture
+def sample_smartphone_1():
+    return Smartphone("iPhone 15", "Описание", 95000.0, 5, 4.0, "Pro", 256, "Titanium")
+
+
+@pytest.fixture
+def sample_smartphone_2():
+    return Smartphone("Galaxy S24", "Описание", 85000.0, 10, 4.2, "Ultra", 512, "Black")
+
+
+@pytest.fixture
+def sample_lawn_grass():
+    return LawnGrass("Газонная трава", "Описание", 1200.0, 20, "Россия", 14, "Зеленый")
+
+
+@pytest.fixture
+def empty_category():
+    return Category("Пустая категория", "Описание")
