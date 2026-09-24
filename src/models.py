@@ -8,11 +8,13 @@ class Product:
         self.quantity = quantity
 
     def __add__(self, other):
-        """Реализация сложения двух товаров (цена * количество + цена * количество)."""
-        # Проверяем, что складываем именно с другим объектом Product
-        if isinstance(other, Product):
+        """
+        Возвращает суммарную стоимость двух товаров.
+        Складывать можно только объекты абсолютно одинаковых классов.
+        """
+        if type(self) is type(other):
             return (self.price * self.quantity) + (other.price * other.quantity)
-        raise TypeError("Складывать можно только объекты класса Product")
+        raise TypeError("Складывать можно только товары одного и того же класса")
 
     def __str__(self):
         # Реализовано строковое отображение в заданном формате
@@ -60,17 +62,60 @@ class Category:
         Category.category_count += 1
 
     def __str__(self):
-        # Количество продуктов считается как сумма всех единиц товара на складе (quantity)
         total_quantity = sum(product.quantity for product in self.__products)
-        return f'{self.name}, количество продуктов: {total_quantity} шт.'
+        return f'{self.name}, количество товаров: {total_quantity} шт.'
 
     def add_product(self, product: Product) -> None:
-        """Метод для добавления товара Product в приватный список товаров."""
+        """
+        Добавляет продукт в категорию.
+        Защищает список от добавления объектов, не являющихся Product или его наследниками.
+        """
+        # Проверяем, является ли объект экземпляром класса Product или его подклассов
+        if not isinstance(product, Product):
+            raise TypeError("Добавлять в категорию можно только товары (класса Product или его наследников)")
+
+        # Логика проверки на уникальность по имени
+        for existing_product in self.__products:
+            if existing_product.name == product.name:
+                existing_product.quantity += product.quantity
+                existing_product.price = max(existing_product.price, product.price)
+                return
+
+        # Если продукт уникальный и валидный, добавляем его
         self.__products.append(product)
         Category.product_count += 1
 
+    # Этот блок нужно оставить, а дубликат выше — удалить
     @property
     def products(self) -> str:
-        """Оптимизированный геттер для вывода списка товаров с использованием str(product)."""
-        # Преобразуем каждый объект продукта в строку благодаря реализованному Product.__str__
+        """Возвращает строковое представление списка товаров."""
         return "\n".join(str(product) for product in self.__products)
+
+
+class Smartphone(Product):
+    """Класс для представления смартфона, наследуется от Product."""
+
+    def __init__(self, name: str, description: str, price: float, quantity: int,
+                 efficiency: float, model: str, memory: int, color: str) -> None:
+        # Инициализируем свойства родительского класса Product
+        super().__init__(name, description, price, quantity)
+
+        # Добавляем новые специфичные свойства смартфона
+        self.efficiency = efficiency  # Производительность
+        self.model = model  # Модель
+        self.memory = memory  # Объем встроенной памяти (ГБ)
+        self.color = color  # Цвет
+
+
+class LawnGrass(Product):
+    """Класс для представления газонной травы, наследуется от Product."""
+
+    def __init__(self, name: str, description: str, price: float, quantity: int,
+                 country: str, germination_period: int, color: str) -> None:
+        # Инициализируем свойства родительского класса Product
+        super().__init__(name, description, price, quantity)
+
+        # Добавляем новые специфичные свойства газонной травы
+        self.country = country  # Страна-производитель
+        self.germination_period = germination_period  # Срок прорастания (в днях)
+        self.color = color  # Цвет
