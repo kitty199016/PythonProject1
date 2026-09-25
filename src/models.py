@@ -1,11 +1,33 @@
-class Product:
+from abc import ABC, abstractmethod
+
+class BaseProduct(ABC):
+    """Базовый абстрактный класс для всех типов продуктов магазина."""
+
+    @abstractmethod
+    def __init__(self, name: str, description: str, price: float, quantity: int) -> None:
+        """Каждый продукт должен иметь имя, описание, цену и количество."""
+        self.name = name
+        self.description = description
+        self.price = price
+        self.quantity = quantity
+
+    @abstractmethod
+    def __str__(self) -> str:
+        """Каждый продукт должен иметь строковое представление."""
+        pass
+
+    @abstractmethod
+    def __add__(self, other):
+        """Каждый продукт должен поддерживать механику сложения стоимости остатков."""
+        pass
+
+class Product(BaseProduct):
     """Класс для представления товара."""
 
     def __init__(self, name: str, description: str, price: float, quantity: int):
-        self.name = name
-        self.description = description
+        # Вызываем конструктор абстрактного класса
+        super().__init__(name, description, price, quantity)
         self.__price = price  # Приватный атрибут цены
-        self.quantity = quantity
 
     def __add__(self, other):
         """
@@ -17,12 +39,12 @@ class Product:
         raise TypeError("Складывать можно только товары одного и того же класса")
 
     def __str__(self):
-        # Реализовано строковое отображение в заданном формате
+        # Строковое представление товара
         return f'{self.name}, {self.price} руб. Остаток: {self.quantity} шт.'
 
     @classmethod
     def new_product(cls, product_data: dict):
-        """Метод-фабрика для создания объекта Product из словаря."""
+        """Класс-метод для создания объекта Product из словаря."""
         return cls(
             name=product_data["name"],
             description=product_data["description"],
@@ -39,7 +61,7 @@ class Product:
     def price(self, new_price: float) -> None:
         """Сеттер для изменения цены товара с валидацией."""
         if new_price <= 0:
-            print("Цена не должна быть нулевая или отрицательная")
+            print("Цена не должна быть нулевой или отрицательной")
         else:
             self.__price = new_price
 
