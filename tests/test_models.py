@@ -1,5 +1,5 @@
 import pytest
-from src.models import Category, Product, Smartphone, LawnGrass
+from src.models import Category, Product, Smartphone, LawnGrass,BaseProduct
 
 
 @pytest.fixture(autouse=True)
@@ -84,9 +84,9 @@ def test_product_add_type_error(product_a):
 # --- Тесты для класса Category ---
 
 def test_category_str(sample_category):
-    """Тест строкового представления категории (изменен под ваш исходный код)."""
-    # Ваш код выводит 'Бытовая техника, количество товаров: 12 шт.'
-    assert str(sample_category) == "Бытовая техника, количество товаров: 12 шт."
+    """Тест строкового представления категории."""
+    # Изменяем ожидаемое слово 'товаров' на 'продуктов' в соответствии с вашим кодом
+    assert str(sample_category) == "Бытовая техника, количество продуктов: 12 шт."
 
 
 def test_category_products_getter(sample_category):
@@ -172,3 +172,52 @@ def sample_lawn_grass():
 @pytest.fixture
 def empty_category():
     return Category("Пустая категория", "Описание")
+
+
+# --- ТЕСТЫ ДЛЯ АБСТРАКТНОГО КЛАССА (BaseProduct) ---
+
+def test_base_product_cannot_be_instantiated():
+    """Проверка, что невозможно создать объект абстрактного класса BaseProduct напрямую."""
+    with pytest.raises(TypeError) as exc_info:
+        # Попытка инициализации абстрактного класса
+        _ = BaseProduct("Тест", "Описание", 100.0, 1)  # type: ignore
+
+    # Python выдает ошибку о невозможности создания экземпляра абстрактного класса
+    assert "Can't instantiate abstract class BaseProduct" in str(exc_info.value)
+
+
+# --- ТЕСТЫ ДЛЯ КЛАССА-МИКСИНА (LogMixin) ---
+
+def test_product_creation_logging(capsys):
+    """Проверка, что при создании объекта Product миксин выводит лог в консоль."""
+    # Создаем объект, вывод перехватывается фикстурой capsys
+    _ = Product('Продукт1', 'Описание продукта', 1200.0, 10)
+
+    # Читаем то, что попало в stdout
+    captured = capsys.readouterr()
+
+    # Проверяем ожидаемую строку лога
+    expected_output = "Создан объект: Product('Продукт1', 'Описание продукта', 1200.0, 10)\n"
+    assert captured.out == expected_output
+
+
+def test_smartphone_creation_logging(capsys):
+    """Проверка, что миксин корректно логирует подклассы и выводит их имя (Smartphone)."""
+    _ = Smartphone("iPhone 15", "Флагман", 95000.0, 5, 4.0, "Pro", 256, "Titanium")
+
+    captured = capsys.readouterr()
+
+    # Так как аргументы передаются в super().__init__ базового класса Product,
+    # миксин перехватывает первые 4 переданных позиционных аргумента
+    expected_output = "Создан объект: Smartphone('iPhone 15', 'Флагман', 95000.0, 5)\n"
+    assert captured.out == expected_output
+
+
+def test_lawn_grass_creation_logging(capsys):
+    """Проверка, что миксин корректно логирует подклассы и выводит их имя (LawnGrass)."""
+    _ = LawnGrass("Канада Грин", "Износостойкая", 1200.0, 20, "Канада", 14, "Изумрудный")
+
+    captured = capsys.readouterr()
+
+    expected_output = "Создан объект: LawnGrass('Канада Грин', 'Износостойкая', 1200.0, 20)\n"
+    assert captured.out == expected_output
