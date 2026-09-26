@@ -1,11 +1,55 @@
-class Product:
+from abc import ABC, abstractmethod
+
+
+class LogMixin:
+    """Класс-миксин для автоматического логирования создания объектов."""
+
+    def __init__(self, *args, **kwargs) -> None:
+        # Инициализируем свойства следующих классов в цепочке MRO (BaseProduct)
+        super().__init__(*args, **kwargs)
+
+        # Собираем позиционные аргументы (например, имя, описание, цена, количество)
+        args_str = ", ".join(repr(arg) for arg in args)
+        # Собираем именованные аргументы, если они передавались
+        kwargs_str = ", ".join(f"{k}={repr(v)}" for k, v in kwargs.items())
+
+        # Объединяем параметры в одну строку для вывода
+        all_params = ", ".join(filter(None, [args_str, kwargs_str]))
+
+        # Выводим имя фактического класса, который создается в данный момент
+        print(f"Создан объект: {self.__class__.__name__}({all_params})")
+
+
+class BaseProduct(ABC):
+    """Базовый абстрактный класс для всех типов продуктов магазина."""
+
+    @abstractmethod
+    def __init__(self, name: str, description: str, price: float, quantity: int) -> None:
+        """Каждый продукт должен иметь имя, описание, цену и количество."""
+        self.name = name
+        self.description = description
+        self.price = price
+        self.quantity = quantity
+
+    @abstractmethod
+    def __str__(self) -> str:
+        """Каждый продукт должен предоставлять строковое представление."""
+        pass
+
+    @abstractmethod
+    def __add__(self, other):
+        """Каждый продукт должен поддерживать операцию сложения стоимости."""
+        pass
+
+
+# Добавляем LogMixin первым в цепочку наследования Product
+class Product(LogMixin, BaseProduct):
     """Класс для представления товара."""
 
     def __init__(self, name: str, description: str, price: float, quantity: int):
-        self.name = name
-        self.description = description
+        # Вызываем конструктор цепочки MRO. Первым отработает LogMixin, затем BaseProduct
+        super().__init__(name, description, price, quantity)
         self.__price = price  # Приватный атрибут цены
-        self.quantity = quantity
 
     def __add__(self, other):
         """
@@ -17,12 +61,12 @@ class Product:
         raise TypeError("Складывать можно только товары одного и того же класса")
 
     def __str__(self):
-        # Реализовано строковое отображение в заданном формате
+        # Строковое представление товара
         return f'{self.name}, {self.price} руб. Остаток: {self.quantity} шт.'
 
     @classmethod
     def new_product(cls, product_data: dict):
-        """Метод-фабрика для создания объекта Product из словаря."""
+        """Класс-метод для создания объекта Product из словаря."""
         return cls(
             name=product_data["name"],
             description=product_data["description"],
@@ -39,7 +83,7 @@ class Product:
     def price(self, new_price: float) -> None:
         """Сеттер для изменения цены товара с валидацией."""
         if new_price <= 0:
-            print("Цена не должна быть нулевая или отрицательная")
+            print("Цена не должна быть нулевой или отрицательной")
         else:
             self.__price = new_price
 
@@ -63,29 +107,22 @@ class Category:
 
     def __str__(self):
         total_quantity = sum(product.quantity for product in self.__products)
-        return f'{self.name}, количество товаров: {total_quantity} шт.'
+        return f'{self.name}, количество продуктов: {total_quantity} шт.'
 
     def add_product(self, product: Product) -> None:
-        """
-        Добавляет продукт в категорию.
-        Защищает список от добавления объектов, не являющихся Product или его наследниками.
-        """
-        # Проверяем, является ли объект экземпляром класса Product или его подклассов
+        """Добавляет продукт в категорию с валидацией типа."""
         if not isinstance(product, Product):
             raise TypeError("Добавлять в категорию можно только товары (класса Product или его наследников)")
 
-        # Логика проверки на уникальность по имени
         for existing_product in self.__products:
             if existing_product.name == product.name:
                 existing_product.quantity += product.quantity
                 existing_product.price = max(existing_product.price, product.price)
                 return
 
-        # Если продукт уникальный и валидный, добавляем его
         self.__products.append(product)
         Category.product_count += 1
 
-    # Этот блок нужно оставить, а дубликат выше — удалить
     @property
     def products(self) -> str:
         """Возвращает строковое представление списка товаров."""
@@ -97,10 +134,9 @@ class Smartphone(Product):
 
     def __init__(self, name: str, description: str, price: float, quantity: int,
                  efficiency: float, model: str, memory: int, color: str) -> None:
-        # Инициализируем свойства родительского класса Product
         super().__init__(name, description, price, quantity)
 
-        # Добавляем новые специфичные свойства смартфона
+        # Специфичные свойства смартфона
         self.efficiency = efficiency  # Производительность
         self.model = model  # Модель
         self.memory = memory  # Объем встроенной памяти (ГБ)
@@ -112,10 +148,9 @@ class LawnGrass(Product):
 
     def __init__(self, name: str, description: str, price: float, quantity: int,
                  country: str, germination_period: int, color: str) -> None:
-        # Инициализируем свойства родительского класса Product
         super().__init__(name, description, price, quantity)
 
-        # Добавляем новые специфичные свойства газонной травы
+        # Специфичные свойства газонной травы
         self.country = country  # Страна-производитель
         self.germination_period = germination_period  # Срок прорастания (в днях)
         self.color = color  # Цвет
