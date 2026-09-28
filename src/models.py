@@ -2,71 +2,50 @@ from abc import ABC, abstractmethod
 
 
 class LogMixin:
-    """Класс-миксин для автоматического логирования создания объектов."""
+    """Миксин-класс для автоматического логирования создания объектов."""
 
-    def __init__(self, *args, **kwargs) -> None:
-        # Инициализируем свойства следующих классов в цепочке MRO (BaseProduct)
-        super().__init__(*args, **kwargs)
-
-        # Собираем позиционные аргументы (например, имя, описание, цена, количество)
-        args_str = ", ".join(repr(arg) for arg in args)
-        # Собираем именованные аргументы, если они передавались
-        kwargs_str = ", ".join(f"{k}={repr(v)}" for k, v in kwargs.items())
-
-        # Объединяем параметры в одну строку для вывода
-        all_params = ", ".join(filter(None, [args_str, kwargs_str]))
-
-        # Выводим имя фактического класса, который создается в данный момент
+    def __init__(self, name: str, description: str, price: float, quantity: int, *args, **kwargs) -> None:
+        # Форматируем первые 4 базовых параметра строго в соответствии с ожиданиями тестов
+        base_params = [name, description, price, quantity]
+        all_params = ", ".join(repr(arg) for arg in base_params)
         print(f"Создан объект: {self.__class__.__name__}({all_params})")
+
+        # Передаем управление дальше по MRO
+        super().__init__(name=name, description=description, price=price, quantity=quantity, *args, **kwargs)
 
 
 class BaseProduct(ABC):
-    """Базовый абстрактный класс для всех типов продуктов магазина."""
+    """Базовый абстрактный класс для всех видов продуктов."""
 
     @abstractmethod
-    def __init__(self, name: str, description: str, price: float, quantity: int) -> None:
-        """Каждый продукт должен иметь имя, описание, цену и количество."""
+    def __init__(self, name: str, description: str, price: float, quantity: int, **kwargs) -> None:
+        if quantity <= 0:
+            raise ValueError("Товар с нулевым количеством не может быть добавлен")
+
         self.name = name
         self.description = description
         self.price = price
         self.quantity = quantity
-
-    @abstractmethod
-    def __str__(self) -> str:
-        """Каждый продукт должен предоставлять строковое представление."""
-        pass
-
-    @abstractmethod
-    def __add__(self, other):
-        """Каждый продукт должен поддерживать операцию сложения стоимости."""
-        pass
+        super().__init__()
 
 
-# Добавляем LogMixin первым в цепочку наследования Product
 class Product(LogMixin, BaseProduct):
-    """Класс для представления товара."""
+    """Класс для базового товара."""
 
-    def __init__(self, name: str, description: str, price: float, quantity: int):
-        # Вызываем конструктор цепочки MRO. Первым отработает LogMixin, затем BaseProduct
-        super().__init__(name, description, price, quantity)
-        self.__price = price  # Приватный атрибут цены
+    def __init__(self, name: str, description: str, price: float, quantity: int, **kwargs):
+        super().__init__(name, description, price, quantity, **kwargs)
+        self.__price = price
 
     def __add__(self, other):
-        """
-        Возвращает суммарную стоимость двух товаров.
-        Складывать можно только объекты абсолютно одинаковых классов.
-        """
         if type(self) is type(other):
             return (self.price * self.quantity) + (other.price * other.quantity)
         raise TypeError("Складывать можно только товары одного и того же класса")
 
     def __str__(self):
-        # Строковое представление товара
         return f'{self.name}, {self.price} руб. Остаток: {self.quantity} шт.'
 
     @classmethod
     def new_product(cls, product_data: dict):
-        """Класс-метод для создания объекта Product из словаря."""
         return cls(
             name=product_data["name"],
             description=product_data["description"],
@@ -76,20 +55,18 @@ class Product(LogMixin, BaseProduct):
 
     @property
     def price(self) -> float:
-        """Геттер для получения цены товара."""
         return self.__price
 
     @price.setter
     def price(self, new_price: float) -> None:
-        """Сеттер для изменения цены товара с валидацией."""
         if new_price <= 0:
-            print("Цена не должна быть нулевой или отрицательной")
+            print("Цена не должна быть нулевая или отрицательная")
         else:
             self.__price = new_price
 
 
 class Category:
-    """Класс для представления категории товаров."""
+    """Класс для категорий товаров."""
 
     category_count = 0
     product_count = 0
@@ -110,9 +87,8 @@ class Category:
         return f'{self.name}, количество продуктов: {total_quantity} шт.'
 
     def add_product(self, product: Product) -> None:
-        """Добавляет продукт в категорию с валидацией типа."""
         if not isinstance(product, Product):
-            raise TypeError("Добавлять в категорию можно только товары (класса Product или его наследников)")
+            raise TypeError("Добавить можно только объект класса Product")
 
         for existing_product in self.__products:
             if existing_product.name == product.name:
@@ -125,32 +101,41 @@ class Category:
 
     @property
     def products(self) -> str:
-        """Возвращает строковое представление списка товаров."""
         return "\n".join(str(product) for product in self.__products)
+
+    def average_price(self) -> float:
+        try:
+            total_price = sum(product.price for product in self.__products)
+            avg_price = total_price / len(self.__products)
+            return round(avg_price, 2)
+        except ZeroDivisionError:
+            return 0
 
 
 class Smartphone(Product):
-    """Класс для представления смартфона, наследуется от Product."""
+    """Класс для смартфонов."""
 
     def __init__(self, name: str, description: str, price: float, quantity: int,
                  efficiency: float, model: str, memory: int, color: str) -> None:
-        super().__init__(name, description, price, quantity)
-
-        # Специфичные свойства смартфона
-        self.efficiency = efficiency  # Производительность
-        self.model = model  # Модель
-        self.memory = memory  # Объем встроенной памяти (ГБ)
-        self.color = color  # Цвет
+        super().__init__(
+            name, description, price, quantity,
+            efficiency=efficiency, model=model, memory=memory, color=color
+        )
+        self.efficiency = efficiency
+        self.model = model
+        self.memory = memory
+        self.color = color
 
 
 class LawnGrass(Product):
-    """Класс для представления газонной травы, наследуется от Product."""
+    """Класс для газонной травы."""
 
     def __init__(self, name: str, description: str, price: float, quantity: int,
                  country: str, germination_period: int, color: str) -> None:
-        super().__init__(name, description, price, quantity)
-
-        # Специфичные свойства газонной травы
-        self.country = country  # Страна-производитель
-        self.germination_period = germination_period  # Срок прорастания (в днях)
-        self.color = color  # Цвет
+        super().__init__(
+            name, description, price, quantity,
+            country=country, germination_period=germination_period, color=color
+        )
+        self.country = country
+        self.germination_period = germination_period
+        self.color = color
