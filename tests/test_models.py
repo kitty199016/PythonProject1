@@ -221,3 +221,62 @@ def test_lawn_grass_creation_logging(capsys):
 
     expected_output = "Создан объект: LawnGrass('Канада Грин', 'Износостойкая', 1200.0, 20)\n"
     assert captured.out == expected_output
+
+
+# --- Тесты для проверки исключения ValueError при количестве <= 0 ---
+
+def test_create_product_with_zero_quantity():
+    """Проверка, что создание базового продукта с 0 количеством вызывает ValueError."""
+    with pytest.raises(ValueError) as exc_info:
+        Product("Тестовый товар", "Описание", 100.0, 0)
+
+    assert str(exc_info.value) == "Товар с нулевым количеством не может быть добавлен"
+
+
+def test_create_smartphone_with_negative_quantity():
+    """Проверка, что создание смартфона с отрицательным количеством вызывает ValueError."""
+    with pytest.raises(ValueError) as exc_info:
+        Smartphone("iPhone 15", "Описание", 100000.0, -5, 3.2, "15", 128, "Black")
+
+    assert str(exc_info.value) == "Товар с нулевым количеством не может быть добавлен"
+
+
+def test_create_lawngrass_with_zero_quantity():
+    """Проверка, что создание газонной травы с 0 количеством вызывает ValueError."""
+    with pytest.raises(ValueError) as exc_info:
+        LawnGrass("Газон Elite", "Описание", 500.0, 0, "Нидерланды", 14, "Зеленый")
+
+    assert str(exc_info.value) == "Товар с нулевым количеством не может быть добавлен"
+
+
+# --- Тесты для проверки расчета средней стоимости товаров в категории ---
+
+def test_average_price_empty_category():
+    """Проверка, что в пустой категории средний ценник равен 0 (перехват ZeroDivisionError)."""
+    empty_category = Category("Пустая категория", "Здесь нет товаров")
+    assert empty_category.average_price() == 0
+
+
+def test_average_price_with_products():
+    """Проверка корректного подсчета средней стоимости товаров."""
+    prod1 = Product("Мышка", "Беспроводная мышь", 1500.0, 2)
+    prod2 = Product("Клавиатура", "Механическая", 4500.0, 1)
+
+    # Категория с двумя уникальными товарами
+    tech_category = Category("Периферия", "Аксессуары для ПК", [prod1, prod2])
+
+    # Средняя цена рассчитывается как сумма цен уникальных товаров деленная на их количество
+    # (1500 + 4500) / 2 = 3000.0
+    assert tech_category.average_price() == 3000.0
+
+
+def test_average_price_after_adding_product():
+    """Проверка, что средняя цена пересчитывается при добавлении нового уникального товара."""
+    prod1 = Product("Шоколад", "Темный", 100.0, 10)
+    food_category = Category("Еда", "Продукты питания", [prod1])
+    assert food_category.average_price() == 100.0
+
+    prod2 = Product("Печенье", "Овсяное", 200.0, 5)
+    food_category.add_product(prod2)
+    # (100 + 200) / 2 = 150.0
+    assert food_category.average_price() == 150.0

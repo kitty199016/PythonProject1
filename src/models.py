@@ -4,15 +4,14 @@ from abc import ABC, abstractmethod
 class LogMixin:
     """Миксин-класс для автоматического логирования создания объектов."""
 
-    def __init__(self, *args, **kwargs) -> None:
-        # Логируем переданные параметры до инициализации родительских классов
-        args_str = ", ".join(repr(arg) for arg in args)
-        kwargs_str = ", ".join(f"{k}={repr(v)}" for k, v in kwargs.items())
-        all_params = ", ".join(filter(None, [args_str, kwargs_str]))
+    def __init__(self, name: str, description: str, price: float, quantity: int, *args, **kwargs) -> None:
+        # Форматируем первые 4 базовых параметра строго в соответствии с ожиданиями тестов
+        base_params = [name, description, price, quantity]
+        all_params = ", ".join(repr(arg) for arg in base_params)
         print(f"Создан объект: {self.__class__.__name__}({all_params})")
 
-        # Передаем инициализацию дальше по MRO (в BaseProduct)
-        super().__init__(*args, **kwargs)
+        # Передаем управление дальше по MRO
+        super().__init__(name=name, description=description, price=price, quantity=quantity, *args, **kwargs)
 
 
 class BaseProduct(ABC):
@@ -20,8 +19,6 @@ class BaseProduct(ABC):
 
     @abstractmethod
     def __init__(self, name: str, description: str, price: float, quantity: int, **kwargs) -> None:
-        """Базовый метод инициализирует общие свойства и проверяет количество."""
-        # Генерируем исключение, если количество товара 0 или меньше, прерывая программу
         if quantity <= 0:
             raise ValueError("Товар с нулевым количеством не может быть добавлен")
 
@@ -29,15 +26,14 @@ class BaseProduct(ABC):
         self.description = description
         self.price = price
         self.quantity = quantity
-        super().__init__()  # Вызывает object.__init__
+        super().__init__()
 
 
 class Product(LogMixin, BaseProduct):
     """Класс для базового товара."""
 
     def __init__(self, name: str, description: str, price: float, quantity: int, **kwargs):
-        # Передаем аргументы по именам в MRO, чтобы LogMixin зафиксировал структуру
-        super().__init__(name=name, description=description, price=price, quantity=quantity, **kwargs)
+        super().__init__(name, description, price, quantity, **kwargs)
         self.__price = price
 
     def __add__(self, other):
@@ -92,7 +88,7 @@ class Category:
 
     def add_product(self, product: Product) -> None:
         if not isinstance(product, Product):
-            raise TypeError("Добавляемый продукт должен быть наследником класса Product")
+            raise TypeError("Добавить можно только объект класса Product")
 
         for existing_product in self.__products:
             if existing_product.name == product.name:
@@ -108,10 +104,6 @@ class Category:
         return "\n".join(str(product) for product in self.__products)
 
     def average_price(self) -> float:
-        """Подсчитывает средний ценник всех товаров в категории.
-
-        Если товаров нет, обрабатывает ZeroDivisionError и возвращает 0.
-        """
         try:
             total_price = sum(product.price for product in self.__products)
             avg_price = total_price / len(self.__products)
@@ -125,9 +117,8 @@ class Smartphone(Product):
 
     def __init__(self, name: str, description: str, price: float, quantity: int,
                  efficiency: float, model: str, memory: int, color: str) -> None:
-        # Передаем специфичные аргументы дальше, чтобы их перехватил LogMixin
         super().__init__(
-            name=name, description=description, price=price, quantity=quantity,
+            name, description, price, quantity,
             efficiency=efficiency, model=model, memory=memory, color=color
         )
         self.efficiency = efficiency
@@ -142,7 +133,7 @@ class LawnGrass(Product):
     def __init__(self, name: str, description: str, price: float, quantity: int,
                  country: str, germination_period: int, color: str) -> None:
         super().__init__(
-            name=name, description=description, price=price, quantity=quantity,
+            name, description, price, quantity,
             country=country, germination_period=germination_period, color=color
         )
         self.country = country
